@@ -20,61 +20,6 @@ services:
       - ./mnt/nfs/gitlab/logs:/var/log/gitlab
       - ./mnt/nfs/gitlab/data:/var/opt/gitlab
 
-  # ################
-  # # Harbor (Full)
-  # ################
-  # registry:
-  #   image: goharbor/registry-photon:v2.13.0
-  #   restart: always
-  #   volumes:
-  #     - ./mnt/nfs/harbor/data:/storage
-
-  # registryctl:
-  #   image: goharbor/harbor-registryctl:v2.13.0
-  #   restart: always
-
-  # harbor-db:
-  #   image: goharbor/harbor-db:v2.13.0
-  #   restart: always
-  #   volumes:
-  #     - ./mnt/nfs/harbor/db:/var/lib/postgresql/data
-
-  # redis:
-  #   image: goharbor/redis-photon:v2.13.0
-  #   restart: always
-  #   volumes:
-  #     - ./mnt/nfs/harbor/redis:/data
-
-  # harbor-core:
-  #   image: goharbor/harbor-core:v2.13.0
-  #   restart: always
-  #   volumes:
-  #     - ./mnt/nfs/harbor/data:/data
-
-  # portal:
-  #   image: goharbor/harbor-portal:v2.13.0
-  #   restart: always
-
-  # jobservice:
-  #   image: goharbor/harbor-jobservice:v2.13.0
-  #   restart: always
-  #   volumes:
-  #     - ./mnt/nfs/harbor/job_logs:/var/log/jobs
-
-  # trivy:
-  #   image: goharbor/trivy-adapter-photon:v2.13.0
-  #   restart: always
-  #   volumes:
-  #     - ./mnt/nfs/harbor/trivy:/home/scanner/.cache
-
-  # nginx-harbor:
-  #   image: goharbor/nginx-photon:v2.13.0
-  #   restart: always
-  #   ports:
-  #     - "8081:8080"
-  #   volumes:
-  #     - ./mnt/nfs/harbor/nginx:/etc/nginx
-
   #################
   # Portainer
   #################
@@ -105,6 +50,50 @@ services:
   #     - gitlab
   #     - nginx-harbor
   #     - portainer
+
+  #################
+  # Sonarqube
+  #################
+  sonarqube:
+    image: sonarqube:community
+    hostname: sonarqube
+    container_name: sonarqube
+    read_only: true
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - ./mnt/nfs/sonar/sonarqube_data:/opt/sonarqube/data
+      - ./mnt/nfs/sonar/sonarqube_extensions:/opt/sonarqube/extensions
+      - ./mnt/nfs/sonar/sonarqube_logs:/opt/sonarqube/logs
+      - ./mnt/nfs/sonar/sonarqube_temp:/opt/sonarqube/temp
+    ports:
+      - "8081:9000"
+    networks:
+      - ghp
+  sonar-db:
+    image: postgres:17
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    hostname: sonar-db
+    container_name: sonar-db
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - ./mnt/nfs/sonar/postgresql:/var/lib/postgresql
+      - ./mnt/nfs/sonar/postgresql_data:/var/lib/postgresql/data
+    networks:
+      - ghp
+
 networks:
   ghp:
     name: ghp
