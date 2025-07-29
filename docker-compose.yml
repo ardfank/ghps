@@ -8,7 +8,7 @@ services:
     hostname: bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev
     container_name: gitlab
     ports:
-      - "2224:22"
+      # - "2224:22"
       - "8080:443"
     environment:
       GITLAB_OMNIBUS_CONFIG: |
