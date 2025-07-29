@@ -4,13 +4,13 @@ services:
   # GitLab Server
   #################
   gitlab:
-    image: gitlab/gitlab-ee:latest
+    image: gitlab/gitlab-ce:latest
     restart: always
     hostname: gitlab.yourdomain.com
     container_name: gitlab
     ports:
       - "2224:22"
-      - "80:80"
+      - "8080:80"
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'http://gitlab.yourdomain.com'
@@ -20,60 +20,60 @@ services:
       - ./mnt/nfs/gitlab/logs:/var/log/gitlab
       - ./mnt/nfs/gitlab/data:/var/opt/gitlab
 
-  #################
-  # Harbor (Full)
-  #################
-  registry:
-    image: goharbor/registry-photon:v2.10.0
-    restart: always
-    volumes:
-      - ./mnt/nfs/harbor/data:/storage
+  # ################
+  # # Harbor (Full)
+  # ################
+  # registry:
+  #   image: goharbor/registry-photon:v2.13.0
+  #   restart: always
+  #   volumes:
+  #     - ./mnt/nfs/harbor/data:/storage
 
-  registryctl:
-    image: goharbor/harbor-registryctl:v2.10.0
-    restart: always
+  # registryctl:
+  #   image: goharbor/harbor-registryctl:v2.13.0
+  #   restart: always
 
-  harbor-db:
-    image: goharbor/harbor-db:v2.10.0
-    restart: always
-    volumes:
-      - ./mnt/nfs/harbor/db:/var/lib/postgresql/data
+  # harbor-db:
+  #   image: goharbor/harbor-db:v2.13.0
+  #   restart: always
+  #   volumes:
+  #     - ./mnt/nfs/harbor/db:/var/lib/postgresql/data
 
-  redis:
-    image: goharbor/redis-photon:v2.10.0
-    restart: always
-    volumes:
-      - ./mnt/nfs/harbor/redis:/data
+  # redis:
+  #   image: goharbor/redis-photon:v2.13.0
+  #   restart: always
+  #   volumes:
+  #     - ./mnt/nfs/harbor/redis:/data
 
-  harbor-core:
-    image: goharbor/harbor-core:v2.10.0
-    restart: always
-    volumes:
-      - ./mnt/nfs/harbor/data:/data
+  # harbor-core:
+  #   image: goharbor/harbor-core:v2.13.0
+  #   restart: always
+  #   volumes:
+  #     - ./mnt/nfs/harbor/data:/data
 
-  portal:
-    image: goharbor/harbor-portal:v2.10.0
-    restart: always
+  # portal:
+  #   image: goharbor/harbor-portal:v2.13.0
+  #   restart: always
 
-  jobservice:
-    image: goharbor/harbor-jobservice:v2.10.0
-    restart: always
-    volumes:
-      - ./mnt/nfs/harbor/job_logs:/var/log/jobs
+  # jobservice:
+  #   image: goharbor/harbor-jobservice:v2.13.0
+  #   restart: always
+  #   volumes:
+  #     - ./mnt/nfs/harbor/job_logs:/var/log/jobs
 
-  trivy:
-    image: goharbor/trivy-adapter-photon:v2.10.0
-    restart: always
-    volumes:
-      - ./mnt/nfs/harbor/trivy:/home/scanner/.cache
+  # trivy:
+  #   image: goharbor/trivy-adapter-photon:v2.13.0
+  #   restart: always
+  #   volumes:
+  #     - ./mnt/nfs/harbor/trivy:/home/scanner/.cache
 
-  nginx-harbor:
-    image: goharbor/nginx-photon:v2.10.0
-    restart: always
-    expose:
-      - "81:8080"
-    volumes:
-      - ./mnt/nfs/harbor/nginx:/etc/nginx
+  # nginx-harbor:
+  #   image: goharbor/nginx-photon:v2.13.0
+  #   restart: always
+  #   ports:
+  #     - "8081:8080"
+  #   volumes:
+  #     - ./mnt/nfs/harbor/nginx:/etc/nginx
 
   #################
   # Portainer
@@ -82,8 +82,8 @@ services:
     image: portainer/portainer-ce
     restart: always
     container_name: portainer
-    expose:
-      - "82:9000"
+    ports:
+      - "8082:9443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./mnt/nfs/portainer/data:/data
