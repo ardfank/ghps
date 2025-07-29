@@ -13,7 +13,7 @@ services:
       - "8080:80"
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://gitlab.yourdomain.com'
+        external_url 'https://bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev/'
         gitlab_rails['gitlab_shell_ssh_port'] = 2224
     volumes:
       - ./mnt/nfs/gitlab/config:/etc/gitlab
