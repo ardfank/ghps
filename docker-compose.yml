@@ -1,24 +1,27 @@
 services:
-
   #################
   # GitLab Server
   #################
   gitlab:
     image: gitlab/gitlab-ce:latest
-    restart: always
-    hostname: gitlab.yourdomain.com
+    # restart: always
+    hostname: bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev
     container_name: gitlab
     ports:
       - "2224:22"
-      - "8080:80"
+      - "8080:443"
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'https://bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev/'
         gitlab_rails['gitlab_shell_ssh_port'] = 2224
+        gitlab_rails['initial_root_password'] = '123123123@Asd'
+        gitlab_rails['omniauth_enabled'] = true
+        gitlab_rails['omniauth_allow_single_sign_on'] = ['bitbucket']
+        gitlab_rails['omniauth_block_auto_created_users'] = false
     volumes:
-      - ./mnt/nfs/gitlab/config:/etc/gitlab
-      - ./mnt/nfs/gitlab/logs:/var/log/gitlab
-      - ./mnt/nfs/gitlab/data:/var/opt/gitlab
+      - /mnt/local/gitlab/config:/etc/gitlab
+      - /mnt/nfs/gitlab/logs:/var/log/gitlab
+      - /mnt/local/gitlab/data:/var/opt/gitlab
 
   #################
   # Portainer
@@ -31,7 +34,7 @@ services:
       - "8082:9443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./mnt/nfs/portainer/data:/data
+      - /mnt/nfs/portainer/data:/data
 
   #################
   # Nginx Reverse Proxy
@@ -67,10 +70,10 @@ services:
       SONAR_JDBC_USERNAME: sonar
       SONAR_JDBC_PASSWORD: sonar
     volumes:
-      - ./mnt/nfs/sonar/sonarqube_data:/opt/sonarqube/data
-      - ./mnt/nfs/sonar/sonarqube_extensions:/opt/sonarqube/extensions
-      - ./mnt/nfs/sonar/sonarqube_logs:/opt/sonarqube/logs
-      - ./mnt/nfs/sonar/sonarqube_temp:/opt/sonarqube/temp
+      - /mnt/local/sonar/sonarqube_data:/opt/sonarqube/data
+      - /mnt/nfs/sonar/sonarqube_extensions:/opt/sonarqube/extensions
+      - /mnt/nfs/sonar/sonarqube_logs:/opt/sonarqube/logs
+      - /mnt/nfs/sonar/sonarqube_temp:/opt/sonarqube/temp
     ports:
       - "8081:9000"
     networks:
@@ -89,8 +92,8 @@ services:
       POSTGRES_PASSWORD: sonar
       POSTGRES_DB: sonar
     volumes:
-      - ./mnt/nfs/sonar/postgresql:/var/lib/postgresql
-      - ./mnt/nfs/sonar/postgresql_data:/var/lib/postgresql/data
+      - /mnt/local/sonar/postgresql:/var/lib/postgresql
+      - /mnt/local/sonar/postgresql_data:/var/lib/postgresql/data
     networks:
       - ghp
 
