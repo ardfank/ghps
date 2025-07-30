@@ -1,3 +1,5 @@
+[![ Gitlab-CE, Portainer, Sonarqube and Harbor on Github Codespace in 30 minutes ](https://img.youtube.com/vi/-qFsZfMLyNc/maxresdefault.jpg)](https://www.youtube.com/watch?v=-qFsZfMLyNc)
+
 ```
 GITLAB + PORTAINER + SONARQUBE
     docker-compose up -d
