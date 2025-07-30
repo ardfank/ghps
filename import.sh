@@ -4,8 +4,8 @@ set -e
 
 export BITBUCKET_USER="user"
 export BITBUCKET_APP_PASSWORD="password"
-export BITBUCKET_WORKSPACE="forca"
-export BITBUCKET_PROJECT_KEY="FC"  # all caps usually
+export BITBUCKET_WORKSPACE="workspace"
+export BITBUCKET_PROJECT_KEY="PROJECTNAME"  # all caps usually
 
 export GITLAB_TOKEN="token"
 export GITLAB_API="https://bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev/api/v4"
