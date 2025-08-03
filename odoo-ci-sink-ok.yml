@@ -1,0 +1,28 @@
+stages:
+  - sink
+variables:
+  GIT_STRATEGY: clone
+  GIT_CLEAN_FLAGS: "-ffdx"
+SINK:
+  stage: sink
+  rules:
+    - if: $JOB == 'test'
+      when: always
+    - when: never
+  variables:
+    GIT_SSL_NO_VERIFY: true 
+  script:
+    - git config --global user.email "you@example.com"
+    - git config --global user.name "GitLab CI"
+    - git remote set-url origin https://push:TOKEN@10.0.0.194:8080/root/odoo.git
+    - git checkout $BRANCH || git checkout -b $BRANCH
+    - rm -rf $BRANCH-temp/ || true
+    - git clone --depth=1 --branch $BRANCH https://github.com/odoo/odoo.git $BRANCH-temp
+    - rm -rf $BRANCH-temp/.git
+    - cp -rf $BRANCH-temp/. .
+    - rm -rf $BRANCH-temp/
+    - git add .
+    - git commit -m "Sinkron branch $BRANCH $CI_COMMIT_TIMESTAMP"
+    - git push origin HEAD:$BRANCH --force
+  tags:
+    - docker-runner
