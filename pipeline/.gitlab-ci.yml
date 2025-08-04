@@ -1,0 +1,32 @@
+stages:
+  - sonar
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: docker
+  cache:
+    key: maven
+    paths:
+      - .m2/repository
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  before_script:
+    - apk add git openjdk17 maven docker-cli
+  script:
+    - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git source
+    - cd source
+    - mvn install -DskipTests
+    - ls -lah org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64
+    - mkdir -p ../idempiere-server
+    - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
+    - cp ../Dockerfile ../idempiere-server/Dockerfile
+    - cp ../docker-entrypoint.sh ../idempiere-server/docker-entrypoint.sh
+    - cd ../idempiere-server/
+    - docker build -t forca-erp:latest .
+  # artifacts:
+  #   paths:
+  #     - idempiere-server/
+  tags:
+    - docker-runner
