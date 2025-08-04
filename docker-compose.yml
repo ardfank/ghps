@@ -5,14 +5,14 @@ services:
   gitlab:
     image: gitlab/gitlab-ce:latest
     # restart: always
-    hostname: bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev
+    # hostname: bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev
     container_name: gitlab
     ports:
       # - "2224:22"
       - "8080:443"
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'https://bug-free-funicular-wrrpp559rj9fgq59-8080.app.github.dev/'
+        external_url 'https://expert-enigma-q77jj4499r929v9r-8080.app.github.dev/'
         gitlab_rails['gitlab_shell_ssh_port'] = 2224
         gitlab_rails['initial_root_password'] = '123123123@Asd'
         gitlab_rails['omniauth_enabled'] = true

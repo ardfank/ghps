@@ -1,0 +1,38 @@
+stages:
+  - sonar
+  - build
+  - build-image
+  - deploy
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  key: maven
+  paths:
+    - .m2/repository
+
+build:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-17
+  script:
+    - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git source
+    - cd source
+    - mvn install -DskipTests
+    - ls -lah org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64
+    - mkdir -p ../idempiere-server
+    - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
+    - ls -lah 
+    - ls -lah ../idempiere-server/
+  artifacts:
+    paths:
+      - idempiere-server/
+  tags:
+    - docker-runner
+
+build-image:
+  stage: build-image
+  image: ubuntu:24.04
+  script: 
+    - ls -lah
+  tags:
+    - docker-runner
