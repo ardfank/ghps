@@ -32,7 +32,7 @@ sonar:
           -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/*.java \
           -Dsonar.issue.ignore.multicriteria.e2.ruleKey=java:S117 \
           -Dsonar.issue.ignore.multicriteria.e2.resourceKey=**/*.java -Dsonar.token=$SONARTOKEN \
-          jacoco:report-aggregate -Dsonar.qualitygate.wait=true
+          -Dsonar.qualitygate.wait=true
   tags:
     - docker-runner
 
