@@ -2,31 +2,34 @@ stages:
   - sonar
   - build
   - deploy
-
 build:
   stage: build
   image: docker
-  cache:
-    key: maven
-    paths:
-      - .m2/repository
-  variables:
-    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  # cache:
+  #   key: maven
+  #   paths:
+  #     - .m2/repository
+  # variables:
+  #   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   before_script:
     - apk add git openjdk17 maven docker-cli
   script:
-    - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git source
-    - cd source
-    - mvn install -DskipTests
-    - ls -lah org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64
+    - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/idempiere-forca.git idempiere-forca
+    # - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git idempiere-forca
+    - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/plugins-erp.git plugins-erp
+    - cd idempiere-forca
+    - mvn -T 1C install -DskipTests
     - mkdir -p ../idempiere-server
     - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
     - cp ../Dockerfile ../idempiere-server/Dockerfile
     - cp ../docker-entrypoint.sh ../idempiere-server/docker-entrypoint.sh
     - cd ../idempiere-server/
     - docker build -t forca-erp:latest .
-  # artifacts:
-  #   paths:
-  #     - idempiere-server/
+  tags:
+    - docker-runner
+deploy:
+  stage: deploy
+  script:
+    - docker-compose -f docker-compose.yml up -d --force-recreate
   tags:
     - docker-runner

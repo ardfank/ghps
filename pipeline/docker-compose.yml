@@ -1,0 +1,29 @@
+services:
+  idempiere:
+    image: forca-erp:latest
+    container_name: forca-erp
+    volumes:
+      - idempiere_config:/opt/idempiere/configuration
+      - idempiere_plugins:/opt/idempiere/plugins
+    environment:
+      - TZ=Asia/Jakarta
+    ports:
+      - 8088:8080
+      - 8443:8443
+      - 12612:12612
+
+  postgres:
+    image: postgres:16
+    container_name: forca-erp-db
+    volumes:
+      - idempiere_data:/var/lib/postgresql/data
+    environment:
+      - TZ=Asia/Jakarta
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+
+volumes:
+  idempiere_data:
+  idempiere_plugins:
+  idempiere_config:
