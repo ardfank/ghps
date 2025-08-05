@@ -6,8 +6,8 @@ GITLAB + PORTAINER + SONARQUBE
 
     SONARQUBE OPTION
     user ID 1000:1000
-    sysctl -w vm.max_map_count=524288
-    sysctl -w fs.file-max=131072
+    vm.max_map_count=524288
+    fs.file-max=131072
     ulimit -n 131072
     ulimit -u 8192
 
@@ -49,9 +49,7 @@ NOTES:
 OPTIONAL CODESPACE:
   sudo fallocate -l 16G /tmp/swap
   sudo chmod 600 /tmp/swap
-  mkswap /tmp/swap
   sudo mkswap /tmp/swap
-  swapon /tmp/swap
   sudo swapon /tmp/swap
 
   sudo setfacl -R -d -m u:10000:rwx /mnt/local
