@@ -15,12 +15,9 @@ services:
         external_url 'https://expert-enigma-q77jj4499r929v9r-8080.app.github.dev/'
         gitlab_rails['gitlab_shell_ssh_port'] = 2224
         gitlab_rails['initial_root_password'] = '123123123@Asd'
-        gitlab_rails['omniauth_enabled'] = true
-        gitlab_rails['omniauth_allow_single_sign_on'] = ['bitbucket']
-        gitlab_rails['omniauth_block_auto_created_users'] = false
     volumes:
       - /mnt/local/gitlab/config:/etc/gitlab
-      - /mnt/nfs/gitlab/logs:/var/log/gitlab
+      - /mnt/local/gitlab/logs:/var/log/gitlab
       - /mnt/local/gitlab/data:/var/opt/gitlab
 
   #################
@@ -35,7 +32,16 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt/nfs/portainer/data:/data
-
+  #################
+  # Gitlab-runner
+  #################
+  gitlab-runner:
+    image: gitlab/gitlab-runner
+    restart: always
+    container_name: gitlab-runner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /mnt/local/gitlab-runner/config:/etc/gitlab-runner
   #################
   # Nginx Reverse Proxy
   #################
