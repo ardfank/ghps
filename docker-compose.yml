@@ -19,6 +19,8 @@ services:
       - /mnt/local/gitlab/config:/etc/gitlab
       - /mnt/local/gitlab/logs:/var/log/gitlab
       - /mnt/local/gitlab/data:/var/opt/gitlab
+    networks:
+      - ghp
 
   #################
   # Portainer
@@ -32,6 +34,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt/nfs/portainer/data:/data
+    networks:
+      - ghp
   #################
   # Gitlab-runner
   #################
@@ -42,6 +46,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt/local/gitlab-runner/config:/etc/gitlab-runner
+    networks:
+      - ghp
   #################
   # Nginx Reverse Proxy
   #################
@@ -102,8 +108,11 @@ services:
       - /mnt/local/sonar/postgresql_data:/var/lib/postgresql/data
     networks:
       - ghp
-
+      
 networks:
   ghp:
     name: ghp
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.46.93.0/25
