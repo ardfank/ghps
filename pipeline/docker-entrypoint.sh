@@ -2,8 +2,8 @@
 
 set -Eeo pipefail
 
-echo "iDempiere Docker Documentation https://github.com/idempiere/idempiere-docker"
-cat $IDEMPIERE_HOME/MD5SUMS
+#echo "iDempiere Docker Documentation https://github.com/idempiere/idempiere-docker"
+#cat $IDEMPIERE_HOME/MD5SUMS
 
 JAVA_OPTIONS=${JAVA_OPTIONS:-${JAVA_OPTIONS:[]}}
 KEY_STORE_PASS=${KEY_STORE_PASS:-myPassword}

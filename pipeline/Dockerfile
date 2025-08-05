@@ -15,13 +15,17 @@ RUN apt-get update && \
 RUN ln -s $IDEMPIERE_HOME/idempiere-server.sh /usr/bin/idempiere && \
     useradd -d $IDEMPIERE_HOME -mk $IDEMPIERE_HOME idempiere
 
-USER idempiere
-
 WORKDIR $IDEMPIERE_HOME
 
 COPY . .
 
 COPY docker-entrypoint.sh $IDEMPIERE_HOME
+
+RUN chown -R idempiere:idempiere $IDEMPIERE_HOME && \
+    chmod +x docker-entrypoint.sh 
+#    ln -s $IDEMPIERE_HOME/idempiere-server.sh /usr/bin/idempiere
+
+USER idempiere
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["idempiere"]
