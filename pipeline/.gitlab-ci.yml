@@ -2,15 +2,49 @@ stages:
   - sonar
   - build
   - deploy
+sonar:
+  stage: sonar
+  image:
+    name: docker
+    entrypoint: [ "" ]
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  before_script:
+    - apk add git openjdk17 maven
+  script:
+    - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/idempiere-forca.git idempiere-forca
+    # - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git idempiere-forca
+    - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/plugins-erp.git plugins-erp
+    - cd idempiere-forca
+    - |
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.0.0.4389:sonar \
+          -Dsonar.projectKey=CI_PROJECT_NAME-CI_COMMIT_REF_NAME \
+          -Dsonar.exclusions=**/I_*.java,**/X_*.java \
+          -Dsonar.host.url=http://sonarqube:9000 \
+          -DmaterializeProduct=none \
+          -DassembleRepository=none \
+          -Dsonar.sourceEncoding=UTF-8 \
+          -Dsonar.scanner.javaOpts="-Xmx6g" \
+          -Dsonar.issue.ignore.multicriteria=e1,e2 \
+          -Dsonar.issue.ignore.multicriteria.e1.ruleKey=java:S3252 \
+          -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/*.java \
+          -Dsonar.issue.ignore.multicriteria.e2.ruleKey=java:S117 \
+          -Dsonar.issue.ignore.multicriteria.e2.resourceKey=**/*.java -Dsonar.token=$SONARTOKEN \
+          jacoco:report-aggregate -Dsonar.qualitygate.wait=true
+  tags:
+    - docker-runner
+
 build:
   stage: build
   image: docker
-  # cache:
-  #   key: maven
-  #   paths:
-  #     - .m2/repository
-  # variables:
-  #   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  cache:
+    key: maven
+    paths:
+      - .m2/repository
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   before_script:
     - apk add git openjdk17 maven docker-cli
   script:
@@ -18,7 +52,7 @@ build:
     # - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git idempiere-forca
     - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/plugins-erp.git plugins-erp
     - cd idempiere-forca
-    - mvn -T 1C install -DskipTests
+    - mvn verify -DskipTests -T 1C 
     - mkdir -p ../idempiere-server
     - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
     - cp ../Dockerfile ../idempiere-server/Dockerfile
