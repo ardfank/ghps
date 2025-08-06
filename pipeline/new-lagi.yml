@@ -5,11 +5,12 @@ stages:
   - deploy
 
 variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dtarget.os=linux -Dtarget.ws=gtk -Dtarget.arch=x86_64 -Dp2.repo.zk=file:/cache/binary.file/p2.zk/10.0.1 -Dp2.repo.repackaged=file:/cache/binary.file/p2.repackaged/12.0.0 -Dp2.repo.jasperstudio=file:/cache/binary.file/p2.repackaged/jasperstudio/6.17.0"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dp2.repo.zk=file:/cache/binary.file/p2.zk/10.0.1 -Dp2.repo.repackaged=file:/cache/binary.file/p2.repackaged/12.0.0 -Dp2.repo.jasperstudio=file:/cache/binary.file/p2.repackaged/jasperstudio/6.17.0"
+  # MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dtarget.os=linux -Dtarget.ws=gtk -Dtarget.arch=x86_64 -Dp2.repo.zk=file:/cache/binary.file/p2.zk/10.0.1 -Dp2.repo.repackaged=file:/cache/binary.file/p2.repackaged/12.0.0 -Dp2.repo.jasperstudio=file:/cache/binary.file/p2.repackaged/jasperstudio/6.17.0"
 
 default:
   image:
-    name: docker
+    name: maven:3.9.6-eclipse-temurin-17
     entrypoint: [""]
   tags:
     - docker-runner
@@ -21,7 +22,6 @@ compile:
     paths:
       - .m2/repository
   script:
-    - apk add git openjdk17 maven
     - rm -rf /cache/temp
     - mkdir /cache/temp && cp -r * /cache/temp
     - cd /cache/temp
@@ -35,13 +35,11 @@ compile:
     # - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git idempiere-forca
     - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/plugins-erp.git plugins-erp
     - cd idempiere-forca
-    - mvn clean verify -DskipTests -T 1C
+    - mvn clean verify -Dtycho.targetPlatformFilter=osgi.ws=gtk,osgi.os=linux,osgi.arch=x86_64
     - mkdir -p ../idempiere-server
     - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
-    # - cp ../Dockerfile ../idempiere-server/Dockerfile
-    # - cp ../docker-entrypoint.sh ../idempiere-server/docker-entrypoint.sh
-    # - cd ../idempiere-server/
-    # - docker build -t forca-erp:latest .
+    - cd ../idempiere-server
+    - ls -lah
 
 compile-offline:
   stage: compile
@@ -51,7 +49,6 @@ compile-offline:
     paths:
       - .m2/repository
   script:
-    - apk add git openjdk17 maven
     - rm -rf /cache/temp
     - mkdir /cache/temp && cp -r * /cache/temp
     - cd /cache/temp
@@ -70,29 +67,27 @@ compile-offline:
       <location type="InstallableUnit" includeAllPlatforms="true" includeMode="slicer" includeSource="true" includeConfigurePhase="true">\
         <repository location="file:../binary.file/p2.repackaged/12.0.0"/>\
       </location>' org.idempiere.p2.targetplatform/org.idempiere.p2.targetplatform.target
-    - mvn clean verify -DskipTests -T 1C
+    - mvn clean verify -Dtycho.targetPlatformFilter=osgi.ws=gtk,osgi.os=linux,osgi.arch=x86_64
     - mkdir -p ../idempiere-server
     - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
-    # - cp ../Dockerfile ../idempiere-server/Dockerfile
-    # - cp ../docker-entrypoint.sh ../idempiere-server/docker-entrypoint.sh
-    # - cd ../idempiere-server/
-    # - docker build -t forca-erp:latest .    
+    - cd ../idempiere-server
+    - ls -lah
     
 sonar:
   stage: sonar
+  allow_failure: true
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
       - .m2/repository
   script:
-    - apk add git openjdk17 maven
     - cd /cache/temp/idempiere-forca
     - >
       mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.0.0.4389:sonar
       -Dsonar.projectKey=${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}
       -Dsonar.sources=. -Dsonar.projectName="${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}"
-      -Dsonar.host.url=http://10.0.2.21:8081
+      -Dsonar.host.url=http://10.0.1.247:8081
       -DmaterializeProduct=none
       -DassembleRepository=none
       -Dsonar.sourceEncoding=UTF-8
@@ -102,11 +97,13 @@ sonar:
 
 build:
   stage: build
+  image: docker
   script:
     - cd /cache/temp/idempiere-server 
     - docker build -t forca-erp:latest .
     
 deploy:
   stage: deploy
+  image: docker
   script:
     - docker-compose -f docker-compose.yml up -d --force-recreate
