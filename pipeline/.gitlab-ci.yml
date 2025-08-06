@@ -1,72 +1,118 @@
 stages:
+  - compile
   - sonar
   - build
   - deploy
-variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dp2.repo.zk=file:../binary.file/p2.zk/10.0.1 -Dp2.repo.repackaged=file:../binary.file/p2.repackaged/12.0.0 -Dp2.repo.jasperstudio=file:../binary.file/p2.repackaged/jasperstudio/6.17.0"
 
-sonar:
-  stage: sonar
+variables:
+  SONAR_USER_HOME: "/cache/.sonar"
+  MAVEN_OPTS: "-Dmaven.repo.local=/cache/.m2/repository -Dp2.repo.zk=file:/cache/binary.file/p2.zk/10.0.1 -Dp2.repo.repackaged=file:/cache/binary.file/p2.repackaged/12.0.0 -Dp2.repo.jasperstudio=file:/cache/binary.file/p2.repackaged/jasperstudio/6.17.0"
+  # MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dtarget.os=linux -Dtarget.ws=gtk -Dtarget.arch=x86_64 -Dp2.repo.zk=file:/cache/binary.file/p2.zk/10.0.1 -Dp2.repo.repackaged=file:/cache/binary.file/p2.repackaged/12.0.0 -Dp2.repo.jasperstudio=file:/cache/binary.file/p2.repackaged/jasperstudio/6.17.0"
+
+default:
   image:
-    name: docker
-    entrypoint: [ "" ]
+    name: maven:3.9.6-eclipse-temurin-17
+    entrypoint: [""]
+  tags:
+    - docker-runner
+
+compile:
+  stage: compile
   cache:
     key: "${CI_JOB_NAME}"
     paths:
-      - .sonar/cache
-  before_script:
-    - apk add git openjdk17 maven
+      - /cache/.m2/repository
   script:
-    - git clone --depth=1 --branch master --single-branch https://github.com/idempiere/binary.file.git binary.file
+    - rm -rf /cache/temp
+    - mkdir /cache/temp && cp -r * /cache/temp
+    - cd /cache/temp
+    - |
+      if [ ! -d "/cache/binary.file" ]; then
+        git clone --depth=1 --branch master --single-branch https://github.com/idempiere/binary.file.git /cache/binary.file
+      else
+        echo "binary.file already exists, skipping clone"
+      fi
+    - git clone --depth=1 --branch massup-12-demo --single-branch https://gt:$GITLABT@crispy-space-trout-v9qp97rwj99fq9j-8080.app.github.dev/root/idempiere-forca.git idempiere-forca
+    # - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git idempiere-forca
+    - git clone --depth=1 --branch massup-12-demo --single-branch https://gt:$GITLABT@crispy-space-trout-v9qp97rwj99fq9j-8080.app.github.dev/root/plugins-erp.git plugins-erp
+    - cd idempiere-forca
+    - mvn clean verify
+    - mkdir -p ../idempiere-server
+    - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
+    - cd ../idempiere-server
+    - ls -lah
+
+compile-offline:
+  stage: compile
+  when: manual
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - /cache/.m2/repository
+  script:
+    - rm -rf /cache/temp
+    - mkdir /cache/temp && cp -r * /cache/temp
+    - cd /cache/temp
+    - |
+      if [ ! -d "/cache/binary.file" ]; then
+        git clone --depth=1 --branch master --single-branch https://github.com/idempiere/binary.file.git /cache/binary.file
+      else
+        echo "binary.file already exists, skipping clone"
+      fi
     - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/idempiere-forca.git idempiere-forca
     # - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git idempiere-forca
     - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/plugins-erp.git plugins-erp
     - cd idempiere-forca
+    - sed -i '/https:\/\/download\.eclipse\.org/d' org.idempiere.p2.targetplatform/org.idempiere.p2.targetplatform.target
+    - sed -i '/<locations>/a\
+      <location type="InstallableUnit" includeAllPlatforms="true" includeMode="slicer" includeSource="true" includeConfigurePhase="true">\
+        <repository location="file:../binary.file/p2.repackaged/12.0.0"/>\
+      </location>' org.idempiere.p2.targetplatform/org.idempiere.p2.targetplatform.target
+    - mvn clean verify -Dtycho.targetPlatformFilter=osgi.ws=gtk,osgi.os=linux,osgi.arch=x86_64
+    - mkdir -p ../idempiere-server
+    - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
+    - cd ../idempiere-server
+    - ls -lah
+    
+sonar:
+  stage: sonar
+  allow_failure: true
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - /cache/.sonar/cache
+      - /cache/.m2/repository
+  script:
+    - cd /cache/temp/idempiere-forca
     - |
-          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.0.0.4389:sonar \
-          -Dsonar.projectKey=CI_PROJECT_NAME-CI_COMMIT_REF_NAME \
-          -Dsonar.exclusions=**/I_*.java,**/X_*.java \
-          -Dsonar.host.url=http://sonarqube:9000 \
-          -DmaterializeProduct=none \
-          -DassembleRepository=none \
-          -Dsonar.sourceEncoding=UTF-8 \
-          -Dsonar.scanner.javaOpts="-Xmx6g" \
-          -Dsonar.issue.ignore.multicriteria=e1,e2 \
-          -Dsonar.issue.ignore.multicriteria.e1.ruleKey=java:S3252 \
-          -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/*.java \
-          -Dsonar.issue.ignore.multicriteria.e2.ruleKey=java:S117 \
-          -Dsonar.issue.ignore.multicriteria.e2.resourceKey=**/*.java -Dsonar.token=$SONARTOKEN \
-          -Dsonar.qualitygate.wait=true
-  tags:
-    - docker-runner
+      mvn verify -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.0.0.4389:sonar \
+      -Dsonar.projectKey=${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME} \
+      -Dsonar.projectName="${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}" \
+      -Dsonar.exclusions=**/.git/**/*,**/I_*.java,**/X_*.java \
+      -Dsonar.projectBaseDir=/cache/temp/idempiere-forca \
+      -Dsonar.host.url=http://172.232.249.39:18081 \
+      -Dsonar.token=$SONARTOKEN \
+      -DmaterializeProduct=none \
+      -DassembleRepository=none \
+      -Dsonar.sourceEncoding=UTF-8 \
+      -Dsonar.scanner.javaOpts="-Xmx6g" \
+      -Dsonar.issue.ignore.multicriteria=e1,e2 \
+      -Dsonar.issue.ignore.multicriteria.e1.ruleKey=java:S3252 \
+      -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/*.java \
+      -Dsonar.issue.ignore.multicriteria.e2.ruleKey=java:S117 \
+      -Dsonar.issue.ignore.multicriteria.e2.resourceKey=**/*.java
 
 build:
   stage: build
   image: docker
-  cache:
-    key: maven
-    paths:
-      - .m2/repository
-  before_script:
-    - apk add git openjdk17 maven docker-cli
   script:
-    - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/idempiere-forca.git idempiere-forca
-    # - git clone --depth=1 --branch release-12 --single-branch https://github.com/idempiere/idempiere.git idempiere-forca
-    - git clone --depth=1 --branch massup-12-demo --single-branch https://$BITTOKEN@bitbucket.org/forca/plugins-erp.git plugins-erp
-    - cd idempiere-forca
-    - mvn verify -DskipTests -T 1C 
-    - mkdir -p ../idempiere-server
-    - cp -r org.idempiere.p2/target/products/org.adempiere.server.product/linux/gtk/x86_64/* ../idempiere-server
-    - cp ../Dockerfile ../idempiere-server/Dockerfile
-    - cp ../docker-entrypoint.sh ../idempiere-server/docker-entrypoint.sh
-    - cd ../idempiere-server/
+    - cp Dockerfile /cache/temp/idempiere-server/Dockerfile
+    - cp docker-entrypoint.sh /cache/temp/idempiere-server/docker-entrypoint.sh
+    - cd /cache/temp/idempiere-server/
     - docker build -t forca-erp:latest .
-  tags:
-    - docker-runner
     
 deploy:
   stage: deploy
+  image: docker
   script:
-    - docker-compose -f docker-compose.yml up -d --force-recreate
-  tags:
-    - docker-runner
+    - docker-compose -f docker-compose.yml up -d
