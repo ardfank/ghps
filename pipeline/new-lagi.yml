@@ -92,17 +92,11 @@ sonar:
       mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.0.0.4389:sonar
       -Dsonar.projectKey=${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}
       -Dsonar.sources=. -Dsonar.projectName="${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}"
-      # -Dsonar.exclusions=**/I_*.java,**/X_*.java
       -Dsonar.host.url=http://10.0.2.21:8081
-      # -DmaterializeProduct=none
-      # -DassembleRepository=none
-      # -Dsonar.sourceEncoding=UTF-8
-      # -Dsonar.scanner.javaOpts="-Xmx6g"
-      # -Dsonar.issue.ignore.multicriteria=e1,e2
-      # -Dsonar.issue.ignore.multicriteria.e1.ruleKey=java:S3252
-      # -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/*.java
-      # -Dsonar.issue.ignore.multicriteria.e2.ruleKey=java:S117
-      # -Dsonar.issue.ignore.multicriteria.e2.resourceKey=**/*.java
+      -DmaterializeProduct=none
+      -DassembleRepository=none
+      -Dsonar.sourceEncoding=UTF-8
+      -Dsonar.scanner.javaOpts="-Xmx6g"
       -Dsonar.token=$SONARTOKEN
       -Dsonar.qualitygate.wait=true
 
