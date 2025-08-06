@@ -8,8 +8,8 @@ services:
     environment:
       - TZ=Asia/Jakarta
     ports:
-      - 8088:8080
-      - 8443:8443
+      - 18088:8080
+      - 18443:8443
       - 12612:12612
 
   postgres:
@@ -20,8 +20,8 @@ services:
     environment:
       - TZ=Asia/Jakarta
       - POSTGRES_PASSWORD=postgres
-    ports:
-      - 5432:5432
+    # ports:
+    #   - 5432:5432
 
 volumes:
   idempiere_data:
